@@ -5,6 +5,14 @@ function getSettings (options) {
   var settings = {
     "entry":      {},
 
+    "node": {
+      "fs": "empty",
+      "net": "empty",
+      "tls": "empty",
+      "fs": "empty",
+      "console": "empty",
+    },
+
     "resolve":    {
                     "extensions": [
                       "",
@@ -23,6 +31,10 @@ function getSettings (options) {
                                   {
                                     "test":   /\.scss$/,
                                     "loader": "style-loader!css-loader!autoprefixer-loader!sass-loader"
+                                  },
+                                  {
+                                    "test":   /\.json?$/,
+                                    "loader": "hson?harmony"
                                   }
                                 ]
                   },
@@ -33,6 +45,7 @@ function getSettings (options) {
                     "publicPath":     "/bundles/",
                     "pathinfo":       true
                   },
+
 
     "plugins":    [
                     new Webpack.optimize.DedupePlugin(),
