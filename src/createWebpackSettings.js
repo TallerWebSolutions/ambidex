@@ -10,7 +10,7 @@ function getSettings (options) {
       "net": "empty",
       "tls": "empty",
       "fs": "empty",
-      "console": "empty",
+      //"console": "empty",
     },
 
     "resolve":    {
