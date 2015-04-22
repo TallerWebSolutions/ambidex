@@ -38,6 +38,7 @@ if (__ambidexPaths.refluxDefinitions) {
   Object.keys(reflux.stores).forEach(
     storeName => {
       reflux.stores[storeName].settings = __ambidexSettings;
+      reflux.stores[storeName].services = __ambidexServices;
     }
   );
 
@@ -47,6 +48,7 @@ if (__ambidexPaths.refluxDefinitions) {
 var initialRenderComplete;
 
 var mountReact = function() {
+
   var container = document.querySelector(containerSelector);
 
   if (!container) {
@@ -56,7 +58,6 @@ var mountReact = function() {
     ReactRouter.run(
       require(__ambidexPaths.routes),
       ReactRouter.HistoryLocation,
-
       // Anything that changes here needs to change in Ambidex.server.js too
       (Handler, routerState) => {
         var render = function () {
@@ -75,7 +76,6 @@ var mountReact = function() {
             container
           );
         };
-
         if (actionsForRouterState && initialRenderComplete) {
           callActionsForRouterState(
             {

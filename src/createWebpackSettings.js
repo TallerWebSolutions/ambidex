@@ -5,14 +5,6 @@ function getSettings (options) {
   var settings = {
     "entry":      {},
 
-    "node": {
-      "fs": "empty",
-      "net": "empty",
-      "tls": "empty",
-      "fs": "empty",
-      "console": true,
-    },
-
     "resolve":    {
                     "extensions": [
                       "",
@@ -31,10 +23,6 @@ function getSettings (options) {
                                   {
                                     "test":   /\.scss$/,
                                     "loader": "style-loader!css-loader!autoprefixer-loader!sass-loader"
-                                  },
-                                  {
-                                    "test":   /\.json?$/,
-                                    "loader": "hson?harmony"
                                   }
                                 ]
                   },

@@ -44,6 +44,7 @@ var callActionsForRouterState       = require("./callActionsForRouterState.js");
 function Ambidex (
   {
     settings,
+    services,
     middlewareInjector
   }
 ) {
@@ -71,6 +72,7 @@ function Ambidex (
       throw new Error("Ambidex requires a settings dictionary to be passed in:\n\t`new Ambidex({\"settings\": {…}}).then(ambidex => …)`");
 
     this._set("settings",           settings);
+    this._set("services",           services);
     this._set("middlewareInjector", middlewareInjector);
 
 
@@ -195,6 +197,7 @@ Ambidex.prototype._reloadExternalModules = function () {
 
 Ambidex.prototype._initWebpack = function () {
   var settings = this._get("settings");
+  var services = this._get("services");
 
   var webpackSettingsOptions  = {
     "paths":  {
@@ -232,8 +235,20 @@ Ambidex.prototype._initWebpack = function () {
    *  See https://github.com/webpack/webpack/issues/634#issuecomment-67832382
    */
 
+  var cache = [];
   webpackSettingsOptions.constants = {
     "__ambidexSettings":  JSON.stringify(settings),
+    "__ambidexServices":  JSON.stringify(services, function(key, value) {
+        if (typeof value === 'object' && value !== null) {
+            if (cache.indexOf(value) !== -1) {
+                // Circular reference found, discard key
+                return;
+            }
+            // Store value in our collection
+            cache.push(value);
+        }
+        return value;
+    }),
     "__ambidexPaths":     Lazy(
                             [
                               "routes",
@@ -244,6 +259,7 @@ Ambidex.prototype._initWebpack = function () {
                             key => [key, JSON.stringify(this._get(key + "Path")) || "null"]
                           ).toObject()
   }
+  cache = null;
 
   // Make sure everything in `settings` is JSON-safe, so we fail consistently if we're passed unJSONifyable data
   settings = this._set("settings", JSON.parse(webpackSettingsOptions.constants.__ambidexSettings));
@@ -316,7 +332,7 @@ Ambidex.prototype._initStack = function () {
 
   var middlewareInjector = this._get("middlewareInjector");
   if (middlewareInjector) {
-    middlewareInjector(this.stack);
+    middlewareInjector(this);
   }
 
   if (settings.FAV_ICON_URL) {
@@ -339,6 +355,7 @@ Ambidex.prototype._initStack = function () {
 // so we return a closure to preserve access to `this`
 Ambidex.prototype._getRequestProcessor = function () {
   var settings = this._get("settings");
+  var services = this._get("services");
   var Scaffold = this._get("Scaffold");
 
   return (connection) => {
@@ -364,7 +381,6 @@ Ambidex.prototype._getRequestProcessor = function () {
             connection.location.path,
             (Handler, routerState) => resolve([Handler, routerState])
           );
-
         } catch (error) {
           reject(error);
         }
@@ -412,7 +428,11 @@ Ambidex.prototype._getRequestProcessor = function () {
 
           Lazy(reflux.stores).each(
             store => store.settings = settings
+            // could also have stores that opt-in automatically backed by memcached here
+          );
 
+          Lazy(reflux.stores).each(
+            store => store.services = services
             // could also have stores that opt-in automatically backed by memcached here
           );
 
