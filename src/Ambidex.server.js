@@ -179,6 +179,7 @@ Ambidex.prototype._reloadExternalModules = function () {
   [
     "refluxDefinitions",
     "refluxActionsForRouterState",
+    "servicesDefinitions"
   ].forEach(
     objectName => {
       var path = this._get(objectName + "Path");
@@ -239,6 +240,7 @@ Ambidex.prototype._initWebpack = function () {
                               "routes",
                               "refluxDefinitions",
                               "refluxActionsForRouterState",
+                              "servicesDefinitions",
                             ]
                           ).map(
                             key => [key, JSON.stringify(this._get(key + "Path")) || "null"]
@@ -347,6 +349,7 @@ Ambidex.prototype._getRequestProcessor = function () {
     var routes                = this._get("routes");
     var refluxDefinitions     = this._get("refluxDefinitions");
     var actionsForRouterState = this._get("refluxActionsForRouterState");
+    var servicesDefinitions   = this._get("servicesDefinitions");
 
     var HandlerWithAmbidexContext = createHandlerWithAmbidexContext(
       {
@@ -404,17 +407,35 @@ Ambidex.prototype._getRequestProcessor = function () {
 
         // Anything that changes here probably needs to change in render.client.js too
 
+        // Initialize the services.
+        if (!Lazy(servicesDefinitions).isEmpty()) {
+          var services = {};
+
+          Object.keys(servicesDefinitions).map(serviceName => {
+            var Service = servicesDefinitions[serviceName];
+
+            services[serviceName] = Service({
+              settings: settings,
+              connection: connection
+            });
+          });
+        }
+
         var reflux;
         var maybeWaitingForReflux = Promise.resolve(null);
 
         if (refluxDefinitions) {
           reflux = new Reflux(refluxDefinitions);
 
-          Lazy(reflux.stores).each(
-            store => store.settings = settings
+          Lazy(reflux.stores).each(store => {
+            store.settings = settings;
+
+            if (typeof services != 'undefined') {
+              store.services = services;
+            }
 
             // could also have stores that opt-in automatically backed by memcached here
-          );
+          });
 
           if (actionsForRouterState) {
             maybeWaitingForReflux = callActionsForRouterState(

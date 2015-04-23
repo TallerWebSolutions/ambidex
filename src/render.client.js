@@ -11,6 +11,9 @@ var createHandlerWithAmbidexContext = require("./createHandlerWithAmbidexContext
 if (__ambidexPaths.refluxActionsForRouterState)
   var actionsForRouterState = require(__ambidexPaths.refluxActionsForRouterState);
 
+if (__ambidexPaths.servicesDefinitions)
+  var servicesDefinitions = require(__ambidexPaths.servicesDefinitions);
+
 var HandlerWithAmbidexContext = createHandlerWithAmbidexContext(
   // enable/disable features based on what settings the developer has passed in
   {
@@ -22,6 +25,19 @@ var containerSelector = "body";
 
 
 injectTapEventPlugin();
+
+// Initialize Services definitions.
+if (typeof servicesDefinitions != 'undefined') {
+  var services = {};
+
+  Object.keys(servicesDefinitions).map(serviceName => {
+    var Service = servicesDefinitions[serviceName];
+
+    services[serviceName] = Service({
+      settings: __ambidexSettings
+    });
+  });
+}
 
 if (__ambidexPaths.refluxDefinitions) {
   var reflux = new Reflux(
@@ -38,6 +54,11 @@ if (__ambidexPaths.refluxDefinitions) {
   Object.keys(reflux.stores).forEach(
     storeName => {
       reflux.stores[storeName].settings = __ambidexSettings;
+
+      if (typeof services != 'undefined') {
+        reflux.stores[storeName].services = services;
+      }
+
     }
   );
 
