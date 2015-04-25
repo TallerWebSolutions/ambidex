@@ -74,10 +74,14 @@ var mountReact = function() {
     return initialRenderComplete = false;
 
   } else {
-    ReactRouter.run(
-      require(__ambidexPaths.routes),
-      ReactRouter.HistoryLocation,
-
+    var Router = ReactRouter.create({
+      routes: require(__ambidexPaths.routes),
+      location: ReactRouter.HistoryLocation,
+      transitionContext: {
+        services: services
+      }
+    });
+    Router.run(
       // Anything that changes here needs to change in Ambidex.server.js too
       (Handler, routerState) => {
         var render = function () {

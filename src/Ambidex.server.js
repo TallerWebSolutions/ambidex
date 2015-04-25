@@ -357,14 +357,43 @@ Ambidex.prototype._getRequestProcessor = function () {
       }
     );
 
+    // Initialize the services.
+    if (!Lazy(servicesDefinitions).isEmpty()) {
+      var services = {};
+
+      Object.keys(servicesDefinitions).map(serviceName => {
+        var Service = servicesDefinitions[serviceName];
+
+        services[serviceName] = Service({
+          settings: settings,
+          connection: connection
+        });
+      });
+    }
+
     // mach won't wait for a result unless we return a promise,
     // so make sure we have one
     var routerRan = new Promise(
       (resolve, reject) => {
         try {
-          ReactRouter.run(
-            routes,
-            connection.location.path,
+          var Router = ReactRouter.create({
+            routes: routes,
+            location: connection.location.path,
+            transitionContext: {
+              services: services
+            },
+            onAbort: function (abortReason, location) {
+              if (abortReason.constructor.name === 'Redirect') {
+                // connection.redirect(302, abortReason.to);
+
+
+                // connection.call(stack);
+                // Promise.resolve();
+              }
+            }
+          });
+
+          Router.run(
             (Handler, routerState) => resolve([Handler, routerState])
           );
 
@@ -382,10 +411,10 @@ Ambidex.prototype._getRequestProcessor = function () {
     ).then(
       // V8 doesn't seem to like resolving multiple values, so we have to wrap them in an extra array =\
       ([[Handler, routerState]], webpackStats) => {
+        console.log('SEGUNDO');
         // Running ReactRouter against the <html> element is buggy, so we only
         // render <body> with ReactRouter and do the rest as static markup with
         // <Scaffold>
-
         var scaffoldProps = {
           "title":      "",
           "favIconSrc": settings.FAV_ICON_URL,
@@ -406,21 +435,6 @@ Ambidex.prototype._getRequestProcessor = function () {
         }
 
         // Anything that changes here probably needs to change in render.client.js too
-
-        // Initialize the services.
-        if (!Lazy(servicesDefinitions).isEmpty()) {
-          var services = {};
-
-          Object.keys(servicesDefinitions).map(serviceName => {
-            var Service = servicesDefinitions[serviceName];
-
-            services[serviceName] = Service({
-              settings: settings,
-              connection: connection
-            });
-          });
-        }
-
         var reflux;
         var maybeWaitingForReflux = Promise.resolve(null);
 
