@@ -411,7 +411,6 @@ Ambidex.prototype._getRequestProcessor = function () {
     ).then(
       // V8 doesn't seem to like resolving multiple values, so we have to wrap them in an extra array =\
       ([[Handler, routerState]], webpackStats) => {
-        console.log('SEGUNDO');
         // Running ReactRouter against the <html> element is buggy, so we only
         // render <body> with ReactRouter and do the rest as static markup with
         // <Scaffold>
