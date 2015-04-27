@@ -383,13 +383,19 @@ Ambidex.prototype._getRequestProcessor = function () {
               services: services
             },
             onAbort: function (abortReason, location) {
+              var error = {};
+
               if (abortReason.constructor.name === 'Redirect') {
-                // connection.redirect(302, abortReason.to);
+                var newPath = this.makePath(abortReason.to, abortReason.params, abortReason.query);
+                connection.redirect(newPath);
 
-
-                // connection.call(stack);
-                // Promise.resolve();
+                error = {
+                  httpStatus: connection.status,
+                  content: 'Redirecting to: ' + newPath
+                }
               }
+
+              reject(error)
             }
           });
 
@@ -507,11 +513,9 @@ Ambidex.prototype._getRequestProcessor = function () {
       }
     ).catch(
       error => {
-        console.error(error.stack);
-
         return {
           "status":   error.httpStatus || 500,
-          "content": "ReactRouter errored."
+          "content": error.content || "ReactRouter errored."
         };
       }
     )
